@@ -1,0 +1,13 @@
+{
+  "n_records": 21900,
+  "n_cities": 6,
+  "date_range": "2014-01-01 to 2023-12-29",
+  "hottest_city": "Delhi",
+  "coldest_city": "Munich",
+  "wettest_city": "Tokyo",
+  "windiest_city": "New York",
+  "max_temp_recorded": 48.9,
+  "min_temp_recorded": -16.8,
+  "max_daily_precip": 104.0,
+  "total_figures_generated": 12
+}
