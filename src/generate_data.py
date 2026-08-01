@@ -142,22 +142,38 @@ def generate_weather_data(n_years: int = 10, seed: int = 42) -> pd.DataFrame:
     df = pd.DataFrame(all_records)
     df["month"] = df["date"].dt.month
     df["year"] = df["date"].dt.year
-    df["season"] = df["month"].map(
-        {
-            12: "Winter",
-            1: "Winter",
-            2: "Winter",
-            3: "Spring",
-            4: "Spring",
-            5: "Spring",
-            6: "Summer",
-            7: "Summer",
-            8: "Summer",
-            9: "Autumn",
-            10: "Autumn",
-            11: "Autumn",
-        }
-    )
+    northern_seasons = {
+        12: "Winter",
+        1: "Winter",
+        2: "Winter",
+        3: "Spring",
+        4: "Spring",
+        5: "Spring",
+        6: "Summer",
+        7: "Summer",
+        8: "Summer",
+        9: "Autumn",
+        10: "Autumn",
+        11: "Autumn",
+    }
+    southern_seasons = {
+        12: "Summer",
+        1: "Summer",
+        2: "Summer",
+        3: "Autumn",
+        4: "Autumn",
+        5: "Autumn",
+        6: "Winter",
+        7: "Winter",
+        8: "Winter",
+        9: "Spring",
+        10: "Spring",
+        11: "Spring",
+    }
+    df["season"] = [
+        (northern_seasons if latitude >= 0 else southern_seasons)[month]
+        for latitude, month in zip(df["latitude"], df["month"])
+    ]
 
     return df
 

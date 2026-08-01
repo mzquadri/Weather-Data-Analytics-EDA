@@ -1,10 +1,12 @@
-# Weather Data Analytics — Exploratory Data Analysis
+# Weather Data Analytics - Synthetic Exploratory Data Analysis
 
-Comprehensive exploratory data analysis of global weather data across 6 cities and different climate zones. This project demonstrates data wrangling, statistical analysis, and professional data visualization techniques using Python.
+An exploratory-data-analysis demonstration using deterministic, generated daily weather observations for six cities. It demonstrates data wrangling, statistical summaries, and visualization techniques with Python.
+
+> **Synthetic-data demonstration:** The dataset, findings, and figures are produced by `src/generate_data.py` with a fixed seed. They are not weather-station observations, climate evidence, forecasts, or a basis for operational, scientific, or policy decisions.
 
 ## Dataset
 
-Synthetic 10-year daily weather data (2014-2023) for 6 cities:
+Synthetic 10-year daily weather data (2014-2023) for six cities:
 
 | City | Climate Zone | Avg Temp (°C) | Key Feature |
 |------|-------------|---------------|-------------|
@@ -19,7 +21,9 @@ Synthetic 10-year daily weather data (2014-2023) for 6 cities:
 
 **Total records**: 21,900 (6 cities x 3,650 days)
 
-## Key Visualizations
+The generator encodes illustrative seasonal, precipitation, and variable-correlation patterns. City-level differences and conclusions below therefore describe the generator's configured distributions, not measured city climates. Seasons respect each city's hemisphere.
+
+## Reference Visualizations
 
 ### Temperature Distributions
 
@@ -86,17 +90,18 @@ Synthetic 10-year daily weather data (2014-2023) for 6 cities:
 └── README.md
 ```
 
-## Key Findings
+## Generated Reference Findings
 
-- **Hottest city**: Delhi (mean ~25°C)
-- **Coldest city**: Munich (mean ~8.5°C)
-- **Wettest city**: Tokyo (highest total precipitation)
-- **Windiest city**: New York (highest mean wind speed)
-- **Delhi monsoon**: Clear precipitation spike in July-September
-- **Southern Hemisphere**: Sydney shows reversed seasonal patterns as expected
-- **Nairobi**: Near-equatorial location results in minimal seasonal temperature variation
-- Strong negative correlation between temperature and pressure
-- Strong positive correlation between cloud cover and humidity
+- **Hottest generated city**: Delhi (mean ~25 C)
+- **Coldest generated city**: Munich (mean ~8.5 C)
+- **Wettest generated city**: Tokyo (highest generated total precipitation)
+- **Windiest generated city**: New York (highest generated mean wind speed)
+- **Configured Delhi pattern**: a precipitation spike in July-September
+- **Configured Southern Hemisphere pattern**: Sydney has reversed temperature seasons
+- **Configured Nairobi pattern**: limited temperature seasonality
+- The generated variables include negative temperature-pressure and positive cloud-cover-humidity relationships
+
+These statements only summarize the included reference run. Re-run the pipeline after changing the generator or dependency versions; do not interpret them as empirical climate findings.
 
 ## How to Run
 
@@ -104,7 +109,10 @@ Synthetic 10-year daily weather data (2014-2023) for 6 cities:
 pip install -r requirements.txt
 python src/generate_data.py
 python src/eda_analysis.py
+python scripts/check_repository.py
 ```
+
+The first command creates the untracked `data/weather_data.csv`; the second overwrites the tracked reference artifacts in `results/`. The included artifacts were generated with the default 10-year, seed-42 configuration. Review output changes before committing them.
 
 ## Tech Stack
 
@@ -116,4 +124,4 @@ python src/eda_analysis.py
 
 ## License
 
-MIT
+This project is released under the [MIT License](LICENSE).
