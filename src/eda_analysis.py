@@ -1,25 +1,34 @@
-"""
-Comprehensive Exploratory Data Analysis of Weather Data.
+"""The original twelve exploratory figures, kept as they were computed.
 
-Generates 10+ professional publication-quality visualizations covering:
-- Temperature distributions and trends
-- Precipitation patterns and extremes
-- Seasonal and geographic comparisons
-- Correlation analysis
-- Climate anomaly detection
+Descriptive plots of the generated record in data/weather_data.csv: temperature
+distributions, precipitation by month, seasonal and per-city comparisons, a
+correlation matrix and a departure-from-monthly-mean series.
+
+Two of these figures carry a caveat the README covers in more detail.
+
+  The correlation matrix (figure 06) is computed over all six cities pooled
+  together, which mixes differences between cities into coefficients meant to
+  describe days within one. Figure 04 under docs/figures shows the same
+  correlation at three levels of pooling.
+
+  The departure series (figure 08) has nothing to find. The generator draws each
+  day independently around a fixed seasonal mean, so there is no trend and no
+  persistence in this record. The series is noise by construction and is not
+  evidence about weather or climate anywhere.
+
+Writes results/figures/ and results/key_findings.json.
 """
 
-import os
 import json
+import os
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import seaborn as sns
-from scipy import stats
 
 # Style configuration
 sns.set_theme(style="whitegrid", font_scale=1.1)
@@ -40,7 +49,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     print(f"Date range: {df['date'].min().date()} to {df['date'].max().date()}")
 
     # ===============================================================
-    # 1. DATASET OVERVIEW — Summary Statistics
+    # 1. DATASET OVERVIEW: summary statistics
     # ===============================================================
     summary = (
         df.groupby("city")
@@ -145,7 +154,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     print("Saved: 03_seasonal_temp.png")
 
     # ===============================================================
-    # 5. PRECIPITATION PATTERNS — Monthly totals
+    # 5. PRECIPITATION PATTERNS: monthly totals
     # ===============================================================
     monthly_precip = (
         df.groupby(["city", "month"])["precipitation_mm"].sum().reset_index()
@@ -254,7 +263,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     print("Saved: 06_correlation_matrix.png")
 
     # ===============================================================
-    # 8. WIND ROSE — Wind speed distributions
+    # 8. WIND ROSE: wind speed distributions
     # ===============================================================
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
     for idx, city in enumerate(cities):
@@ -305,8 +314,8 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
         )
     ax.axhline(0, color="black", linewidth=0.8, linestyle="-")
     ax.set_xlabel("Date")
-    ax.set_ylabel("Temperature Anomaly (°C)")
-    ax.set_title("90-Day Rolling Temperature Anomaly (Relative to Monthly Climatology)")
+    ax.set_ylabel("Departure from monthly mean (°C)")
+    ax.set_title("90-Day Rolling Departure From Each City's Own Monthly Mean")
     ax.legend(bbox_to_anchor=(1.02, 1), loc="upper left")
     fig.tight_layout()
     fig.savefig(os.path.join(figures_dir, "08_temp_anomaly.png"), dpi=150)
@@ -314,7 +323,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     print("Saved: 08_temp_anomaly.png")
 
     # ===============================================================
-    # 10. EXTREME EVENTS — Precipitation exceedance
+    # 10. EXTREME EVENTS: precipitation exceedance
     # ===============================================================
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, city in enumerate(cities):
@@ -335,7 +344,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     print("Saved: 09_precip_exceedance.png")
 
     # ===============================================================
-    # 11. HUMIDITY vs TEMPERATURE — Scatter with density
+    # 11. HUMIDITY vs TEMPERATURE: scatter with density
     # ===============================================================
     fig, axes = plt.subplots(2, 3, figsize=(16, 10))
     for idx, city in enumerate(cities):
@@ -360,7 +369,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
         fontweight="bold",
         y=1.01,
     )
-    cbar = fig.colorbar(scatter, ax=axes, shrink=0.6, label="Precipitation (mm)")
+    fig.colorbar(scatter, ax=axes, shrink=0.6, label="Precipitation (mm)")
     fig.tight_layout()
     fig.savefig(
         os.path.join(figures_dir, "10_temp_humidity_scatter.png"),
@@ -371,7 +380,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     print("Saved: 10_temp_humidity_scatter.png")
 
     # ===============================================================
-    # 12. UV INDEX — Seasonal patterns
+    # 12. UV INDEX: seasonal patterns
     # ===============================================================
     fig, ax = plt.subplots(figsize=(12, 6))
     monthly_uv = df.groupby(["city", "month"])["uv_index"].mean().reset_index()
@@ -451,7 +460,7 @@ def run_eda(csv_path: str, output_dir: str = "../results"):
     with open(os.path.join(output_dir, "key_findings.json"), "w") as f:
         json.dump(findings, f, indent=2)
 
-    print(f"\nKey findings:")
+    print("\nKey findings:")
     for k, v in findings.items():
         print(f"  {k}: {v}")
 
