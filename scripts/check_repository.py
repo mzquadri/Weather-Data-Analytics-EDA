@@ -177,13 +177,18 @@ def main() -> int:
     print(f"  the pooled slope {humidity['pooled_slope']} is still steeper than "
           f"every city, the steepest being {humidity['steepest_city_slope']}")
 
-    flat = re.sub(r"\s+", " ", (ROOT / "README.md").read_text(encoding="utf-8"))
+    def flatten(text: str) -> str:
+        """Collapse runs of whitespace so a claim can wrap in the README."""
+        return re.sub(r"\s+", " ", text).strip()
+
+    flat = flatten((ROOT / "README.md").read_text(encoding="utf-8"))
     failures = []
     checks = claims(data)
     for expected, description in checks:
-        if re.sub(r"\s+", " ", expected.replace("\\*", "*")) not in flat:
-            failures.append(f"  README does not state {description}: expected "
-                            f"{re.sub(r'\\s+', ' ', expected).strip()!r}")
+        wanted = flatten(expected.replace("\\*", "*"))
+        if wanted not in flat:
+            failures.append(f"  README does not state {description}: "
+                            f"expected {wanted!r}")
     print(f"  {len(checks) - len(failures)} of {len(checks)} recorded numbers "
           f"found in the README")
 
@@ -191,8 +196,9 @@ def main() -> int:
         print()
         for failure in failures:
             print(failure)
-        raise SystemExit(f"\n  {len(failures)} claims in the README no longer match "
-                         f"results/summary.json")
+        plural = "claim" if len(failures) == 1 else "claims"
+        raise SystemExit(f"\n  {len(failures)} {plural} in the README no longer "
+                         f"match results/summary.json")
 
     print("  README and results/summary.json agree")
     return 0
