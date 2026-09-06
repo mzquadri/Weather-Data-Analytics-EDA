@@ -1,14 +1,33 @@
-"""
-Generate synthetic multi-city weather dataset for EDA.
+"""Generate the daily weather record this repository analyses.
 
-Creates a realistic 10-year daily weather dataset for 6 cities across
-different climate zones, with proper seasonal patterns, correlations
-between variables, and realistic extreme events.
+Ten years of daily values for six cities, drawn from parameterised
+distributions with a fixed seed. These are not observations and carry no
+information about the named cities or about climate anywhere.
+
+Four properties of this generator are load-bearing for the analysis, and the
+README quotes each of them:
+
+  Leap days are ignored. `n_days = n_years * 365` means a record labelled ten
+  years starting on 1 January 2014 ends on 29 December 2023.
+
+  Wind has no city term. Every city gets the same formula below, differing only
+  in seasonal phase, so any ranking of cities by mean wind speed is noise.
+
+  UV is clipped at zero. `np.clip(sin(...), 0, 1)` gives a hard floor for part
+  of every year away from the equator. Real winter UV is low rather than absent.
+
+  Days are drawn independently around a seasonal mean, so there is no
+  day-to-day persistence. Real weather is autocorrelated and this is not, which
+  matters for anything counting spells or runs.
+
+The parameters below are chosen to make the six cities distinguishable and the
+units legible. They are not fitted to any station record.
 """
+
+import os
 
 import numpy as np
 import pandas as pd
-import os
 
 
 def generate_weather_data(n_years: int = 10, seed: int = 42) -> pd.DataFrame:
@@ -60,6 +79,10 @@ def generate_weather_data(n_years: int = 10, seed: int = 42) -> pd.DataFrame:
         },
     }
 
+    # 365 days per year ignores 2016 and 2020, so ten years stops two days
+    # short of 31 December 2023. Kept as it is because the committed results and
+    # figures were produced from this record; the shortfall is documented rather
+    # than corrected. See the module docstring.
     n_days = n_years * 365
     dates = pd.date_range(start="2014-01-01", periods=n_days, freq="D")
 
@@ -99,19 +122,23 @@ def generate_weather_data(n_years: int = 10, seed: int = 42) -> pd.DataFrame:
         humidity += rng.normal(0, 5, n_days)
         humidity = np.clip(humidity, 10, 100)
 
-        # Wind speed (m/s) — higher in winter
+        # Wind speed (m/s), higher in winter. Note that `params` is not read
+        # here: every city draws from the same distribution, with only the
+        # seasonal phase differing. See the module docstring.
         wind_base = 3.5 - 1.0 * np.sin(2 * np.pi * (doy - 100 + phase_shift) / 365)
         wind_speed = rng.weibull(2.0, n_days) * wind_base
         wind_speed = np.clip(wind_speed, 0.2, 25)
 
-        # Pressure (hPa) — inversely related to temperature
+        # Pressure (hPa), set inversely to temperature by construction
         pressure = 1013.25 - 0.3 * (daily_temp - 15) + rng.normal(0, 5, n_days)
 
         # Cloud cover (0-100%)
         cloud_cover = 20 + 30 * rain_occur + 0.3 * humidity + rng.normal(0, 10, n_days)
         cloud_cover = np.clip(cloud_cover, 0, 100)
 
-        # UV Index (0-12)
+        # UV Index (0-12). The clip at zero puts the winter half of the sine on
+        # a hard floor, so UV sits at zero for a large share of days rather than
+        # falling to a low positive value as it would in a real record.
         solar_angle = np.clip(np.sin(2 * np.pi * (doy - 80 + phase_shift) / 365), 0, 1)
         uv_index = (
             11
@@ -172,7 +199,7 @@ def generate_weather_data(n_years: int = 10, seed: int = 42) -> pd.DataFrame:
     }
     df["season"] = [
         (northern_seasons if latitude >= 0 else southern_seasons)[month]
-        for latitude, month in zip(df["latitude"], df["month"])
+        for latitude, month in zip(df["latitude"], df["month"], strict=True)
     ]
 
     return df
