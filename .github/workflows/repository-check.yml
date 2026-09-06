@@ -3,13 +3,51 @@ name: Repository check
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python scripts/check_repository.py
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Lint
+        run: ruff check .
+
+      # data/*.csv is gitignored, so the record is rebuilt from the seed on a
+      # clean checkout. Everything below depends on that being deterministic.
+      - name: Regenerate the record
+        run: python -m src.generate_data
+
+      - name: Confirm the committed figures are present
+        run: |
+          for figure in 01_annual_cycle 02_precipitation_by_month \
+                        03_wind_is_noise 04_correlation_pooling; do
+            test -f "docs/figures/${figure}.png" || {
+              echo "docs/figures/${figure}.png is missing"; exit 1; }
+          done
+
+      # The tests rebuild the summary in memory and compare it against the
+      # committed results/summary.json section by section, so this is the
+      # reproducibility check. src.summary is deliberately not run first: that
+      # would overwrite the artifact being compared against.
+      - name: Tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Verify the README against results/summary.json
+        run: python scripts/check_repository.py
+
+      - name: Regenerate the figures
+        run: python scripts/figures/generate_figures.py
