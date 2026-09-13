@@ -41,6 +41,51 @@ REQUIRED_FILES = (
 )
 
 
+def renderer_of(png: Path) -> str:
+    """The matplotlib version recorded inside a PNG, or "unknown".
+
+    matplotlib writes its version into a tEXt chunk keyed "Software". Read straight
+    from the bytes so this needs no image library.
+    """
+    data = png.read_bytes()
+    marker = b"Matplotlib version"
+    start = data.find(marker)
+    if start < 0:
+        return "unknown"
+    tail = data[start + len(marker):start + len(marker) + 20]
+    version = bytearray()
+    for byte in tail:
+        char = chr(byte)
+        if char.isdigit() or char == ".":
+            version.append(byte)
+        else:
+            break
+    return version.decode() or "unknown"
+
+
+def figures_were_rendered_together(root: Path) -> tuple[bool, dict[str, list[str]]]:
+    """Every committed figure should carry the same renderer version.
+
+    Sixteen figures are committed and two different scripts produce them:
+    src/eda_analysis.py writes the twelve under results/figures, and
+    scripts/figures/generate_figures.py writes the four under docs/figures.
+    Regenerating one set and not the other leaves the repository showing two
+    vintages of the same analysis, and nothing would have said so: CI checked
+    four of the sixteen for existence and no more.
+
+    Comparing the recorded versions catches that without failing merely because
+    matplotlib moved, which is the point. A whole-set regeneration under a new
+    version still agrees with itself.
+    """
+    by_version: dict[str, list[str]] = {}
+    for png in sorted(root.rglob("*.png")):
+        if ".git" in png.parts:
+            continue
+        by_version.setdefault(renderer_of(png), []).append(
+            str(png.relative_to(root)).replace("\\", "/"))
+    return len(by_version) <= 1, by_version
+
+
 def claims(data: dict) -> list[tuple[str, str]]:
     """Every quoted number, paired with enough context to anchor it."""
     coverage = data["coverage"]
@@ -146,6 +191,28 @@ def main() -> int:
     for source in sorted((ROOT / "src").glob("*.py")):
         py_compile.compile(source, doraise=True)
     print(f"  {len(REQUIRED_FILES)} required files present, src/ compiles")
+
+    # Counts as well as vintages: a deleted figure leaves a consistent set behind.
+    # CI listed four of the sixteen by name and checked nothing about the other twelve.
+    for directory, expected in (("docs/figures", 4), ("results/figures", 12)):
+        found = len(list((ROOT / directory).glob("*.png")))
+        if found != expected:
+            raise SystemExit(f"  {directory} holds {found} figures, expected {expected}")
+
+    consistent, by_version = figures_were_rendered_together(ROOT)
+    if not consistent:
+        print()
+        for version, files in sorted(by_version.items()):
+            print(f"  matplotlib {version}: {', '.join(files)}")
+        raise SystemExit(
+            "\n  the committed figures were not all rendered by the same "
+            "matplotlib, "
+            "so at least one set is stale. Regenerate both: "
+            "`python src/eda_analysis.py` and "
+            "`python scripts/figures/generate_figures.py`")
+    rendered_by = next(iter(by_version))
+    total = sum(len(files) for files in by_version.values())
+    print(f"  all {total} committed figures were rendered by matplotlib {rendered_by}")
 
     if not SUMMARY.exists():
         raise SystemExit("  results/summary.json is missing; run python -m src.summary")

@@ -31,13 +31,10 @@ jobs:
       - name: Regenerate the record
         run: python -m src.generate_data
 
-      - name: Confirm the committed figures are present
-        run: |
-          for figure in 01_annual_cycle 02_precipitation_by_month \
-                        03_wind_is_noise 04_correlation_pooling; do
-            test -f "docs/figures/${figure}.png" || {
-              echo "docs/figures/${figure}.png is missing"; exit 1; }
-          done
+      # The four docs figures used to be listed here by name, and the twelve under
+      # results/figures were not checked at all. scripts/check_repository.py now counts
+      # both directories and compares the matplotlib version recorded inside every PNG,
+      # which catches a deleted figure and a half-regenerated set, not just a missing one.
 
       # The tests rebuild the summary in memory and compare it against the
       # committed results/summary.json section by section, so this is the
