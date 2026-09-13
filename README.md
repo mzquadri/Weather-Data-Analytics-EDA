@@ -240,6 +240,19 @@ the dry-run figure above should be read with that in mind.
 The UV clipping and the equatorial season labels described under Data quality
 affect any figure built on those columns.
 
+The record is small enough that none of this needs an accelerator: it is under
+5 MB once parsed, regenerating it takes about half a second and the grouped
+correlations take single-digit milliseconds. No GPU-capable library is in the
+dependency list and none is warranted.
+
+The committed figures were rendered by a specific matplotlib, which writes its
+version into every PNG. `scripts/check_repository.py` compares those versions and
+fails if the sixteen figures are not one vintage, which is what catches a set
+regenerated on its own. It does not compare pixels: matplotlib renders
+differently between releases, so a figure regenerated under a newer version will
+not be byte-identical to the committed one even when the analysis behind it has
+not moved.
+
 ## Provenance
 
 The repository previously published `results/key_findings.json` and twelve
