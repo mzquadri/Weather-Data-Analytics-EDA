@@ -1,5 +1,15 @@
 # Weather data analysis, and three ways a summary can mislead
 
+<!-- project-story:start -->
+<p align="center"><img src="docs/assets/architecture-animated.svg" alt="Animated architecture diagram of this project" width="100%"></p>
+
+| Problem | Why it mattered | Result |
+|---|---|---|
+| Charts of synthetic data look like findings. | The fair test is recovering what was planted. | **0.09 °C** largest temperature gap from the generator, across six cities |
+
+[See it animated on mzquadri.de](https://mzquadri.de/work/weather-eda)
+<!-- project-story:end -->
+
 An exploratory analysis of a generated ten-year daily weather record for six
 cities. No model is fitted and none is needed: the work is in the acquisition,
 the aggregation and the reading of the result.
